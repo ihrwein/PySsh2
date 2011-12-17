@@ -45,9 +45,10 @@ class Session:
     def banner_set(self, banner):
         self.libssh2.session_banner_set(self.session, banner)
     
-    def startup(self, sock):
-        self.sock = sock.fileno()
-        self.libssh2.session_startup(self.session, self.sock)
+    def startup(self, hostname, port):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.connect((hostname, port))
+        self.libssh2.session_startup(self.session, self.sock.fileno())
     
     def userauth_list(self, username):
         return self.libssh2.userauth_list(self.session, username, len(username)).split(',')
