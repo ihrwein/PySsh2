@@ -54,14 +54,16 @@ class Session:
         return self.libssh2.userauth_list(self.session, username, len(username)).split(',')
     
     def userauth_password(self, username, password):
-        self.libssh2.userauth_password(self.session, username, password)
+        return (self.libssh2.userauth_password(self.session, username, password) == 0)
     
     def userauth_agent(self, username):
+        authenticated = False
         userauth_list = self.userauth_list(username)
         if 'publickey' in userauth_list:
             agent = Agent(self.libssh2, self.session)
-            agent.userauth_agent(username)
+            authenticated = agent.userauth_agent(username)
             del agent
+        return authenticated
     
     def open_session(self):
         return Channel(self.libssh2, self)
@@ -119,5 +121,6 @@ class Agent:
         while (self.libssh2.agent_get_identity(self.agent, libssh2.byref(identity), prev_identity) == 0) and (not authenticated):
             authenticated = (self.libssh2.agent_userauth(self.agent, username, identity) == 0)
             prev_identity = identity
+        return authenticated
 
 
