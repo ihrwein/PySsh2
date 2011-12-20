@@ -80,7 +80,7 @@ LIBSSH2_ERROR = {'NONE'                    :  0,
                  'BAD_SOCKET'              : -45}
 
 
-class LibSSH2:
+class Ssh2:
     
     #int libssh2_init(int flags);
     def __init__(self):
