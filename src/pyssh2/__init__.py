@@ -160,7 +160,7 @@ class Session:
     def userauth_password(self, username, password, passwd_change_cb=None):
         #self.libssh2.libssh2_userauth_password_ex.argtypes = [POINTER(LibSsh2Session), c_char_p, c_uint, c_char_p, c_uint, c_void_p]
         self.libssh2.libssh2_userauth_password_ex.restype = ctypes.c_int
-        self.libssh2.libssh2_userauth_password_ex(self.session, ctypes.c_char_p(username), ctypes.c_uint(len(username)), ctypes.c_char_p(password), ctypes.c_uint(len(password)), ctypes.c_void_p(passwd_change_cb))
+        rc = self.libssh2.libssh2_userauth_password_ex(self.session, ctypes.c_char_p(username), ctypes.c_uint(len(username)), ctypes.c_char_p(password), ctypes.c_uint(len(password)), ctypes.c_void_p(passwd_change_cb))
 
 
 class Agent:
@@ -190,7 +190,7 @@ class Agent:
     #int libssh2_agent_list_identities(LIBSSH2_AGENT *agent);
     def list_identities(self):
         self.libssh2.libssh2_agent_list_identities.restype = ctypes.c_int
-        self.libssh2.libssh2_agent_list_identities(self.agent)
+        rc = self.libssh2.libssh2_agent_list_identities(self.agent)
     
     #int libssh2_agent_get_identity(LIBSSH2_AGENT *agent,   struct libssh2_agent_publickey **store,   struct libssh2_agent_publickey *prev);
     def get_identity(self, store, prev):
