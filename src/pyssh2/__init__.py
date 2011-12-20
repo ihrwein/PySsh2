@@ -200,15 +200,16 @@ class Agent:
     
     #int libssh2_agent_get_identity(LIBSSH2_AGENT *agent,   struct libssh2_agent_publickey **store,   struct libssh2_agent_publickey *prev);
     def get_identity(self, store, prev):
-        self.libssh2.libssh2_agent_get_identity.restype = ctypes.c_int
         self.libssh2.libssh2_agent_get_identity.argtypes = [ctypes.POINTER(Agent.AgentType), ctypes.POINTER(ctypes.POINTER(Agent.AgentPublicKey)), ctypes.POINTER(Agent.AgentPublicKey)]
+        self.libssh2.libssh2_agent_get_identity.restype = ctypes.c_int
         rc = self.libssh2.libssh2_agent_get_identity(self.agent, ctypes.byref(store), prev)
         return rc
     
     #int libssh2_agent_userauth(LIBSSH2_AGENT *agent,   const char *username,   struct libssh2_agent_publickey *identity);
     def userauth(self, username, identity):
+        self.libssh2.libssh2_agent_userauth.argtypes = [ctypes.POINTER(Agent.AgentType), ctypes.c_char_p, ctypes.POINTER(Agent.AgentPublicKey)]
         self.libssh2.libssh2_agent_userauth.restype = ctypes.c_int
-        rc = self.libssh2.libssh2_agent_userauth(self.agent, ctypes.c_char_p(username), ctypes.POINTER(Agent.AgentPublicKey)(identity))
+        rc = self.libssh2.libssh2_agent_userauth(self.agent, username, identity)
         return rc
     
     #int libssh2_agent_disconnect(LIBSSH2_AGENT *agent);
