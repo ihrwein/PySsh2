@@ -115,11 +115,13 @@ class Session:
     def disconnect(self, description, reason=SSH_DISCONNECT['BY_APPLICATION'], lang=""):
         self.libssh2.libssh2_disconnect_ex.restype = ctypes.c_int
         rc = self.libssh2.session_disconnect_ex(self.session, ctypes.c_int(reason), ctypes.c_char_p(description), ctypes.c_char_p(lang))
+        return rc
     
     #int libssh2_session_banner_set(LIBSSH2_SESSION *session, const char *banner);
     def banner_set(self, banner="SSH-2.0-libssh2_1.3.0"):
         self.libssh2.libssh2_banner_set.restype = ctypes.c_int
         rc = self.libssh2.libssh2_banner_set(self.session, ctypes.c_char_p(banner))
+        return rc
     
     #void libssh2_trace(LIBSSH2_SESSION *session, int bitmask);
     def trace(self, bitmask):
@@ -130,6 +132,7 @@ class Session:
     def session_startup(self, socket):
         self.libssh2.libssh2_session_startup.restype = ctypes.c_int
         rc = self.libssh2.libssh2_session_startup(self.session, ctypes.c_int(socket))
+        return rc
     
     #void libssh2_session_set_blocking(LIBSSH2_SESSION *session, int blocking);
     def set_blocking(self, blocking):
@@ -161,6 +164,7 @@ class Session:
         #self.libssh2.libssh2_userauth_password_ex.argtypes = [POINTER(LibSsh2Session), c_char_p, c_uint, c_char_p, c_uint, c_void_p]
         self.libssh2.libssh2_userauth_password_ex.restype = ctypes.c_int
         rc = self.libssh2.libssh2_userauth_password_ex(self.session, ctypes.c_char_p(username), ctypes.c_uint(len(username)), ctypes.c_char_p(password), ctypes.c_uint(len(password)), ctypes.c_void_p(passwd_change_cb))
+        return rc
 
 
 class Agent:
@@ -186,27 +190,32 @@ class Agent:
     def connect(self):
         self.libssh2.libssh2_agent_connect.restype = ctypes.c_int
         rc = self.libssh2.libssh2_agent_connect(self.agent)
+        return rc
     
     #int libssh2_agent_list_identities(LIBSSH2_AGENT *agent);
     def list_identities(self):
         self.libssh2.libssh2_agent_list_identities.restype = ctypes.c_int
         rc = self.libssh2.libssh2_agent_list_identities(self.agent)
+        return rc
     
     #int libssh2_agent_get_identity(LIBSSH2_AGENT *agent,   struct libssh2_agent_publickey **store,   struct libssh2_agent_publickey *prev);
     def get_identity(self, store, prev):
         self.libssh2.libssh2_agent_get_identity.restype = ctypes.c_int
         self.libssh2.libssh2_agent_get_identity.argtypes = [ctypes.POINTER(Agent.AgentType), ctypes.POINTER(ctypes.POINTER(Agent.AgentPublicKey)), ctypes.POINTER(Agent.AgentPublicKey)]
         rc = self.libssh2.libssh2_agent_get_identity(self.agent, ctypes.byref(store), prev)
+        return rc
     
     #int libssh2_agent_userauth(LIBSSH2_AGENT *agent,   const char *username,   struct libssh2_agent_publickey *identity);
     def userauth(self, username, identity):
         self.libssh2.libssh2_agent_userauth.restype = ctypes.c_int
         rc = self.libssh2.libssh2_agent_userauth(self.agent, ctypes.c_char_p(username), ctypes.POINTER(Agent.AgentPublicKey)(identity))
+        return rc
     
     #int libssh2_agent_disconnect(LIBSSH2_AGENT *agent);
     def disconnect(self):
         self.libssh2.libssh2_agent_disconnect.restype = ctypes.c_int
         rc = self.libssh2.libssh2_agent_disconnect(self.agent)
+        return rc
 
 
 class Channel:
@@ -230,12 +239,14 @@ class Channel:
     def close(self):
         self.libssh2.libssh2_channel_close.restype = ctypes.c_int
         rc = self.libssh2.libssh2_channel_close(self.channel)
+        return rc
     
     #int libssh2_channel_process_startup(LIBSSH2_CHANNEL *channel,   const char *request,   unsigned int request_len,   const char *message,   unsigned int message_len);
     #int libssh2_channel_exec(LIBSSH2_CHANNEL *channel, const char *command);
     def execute(self, message, request="exec"):
         self.libssh2.libssh2_channel_process_startup.restype = ctypes.c_int
         rc = self.libssh2.libssh2_channel_process_startup(self.channel, ctypes.c_char_p(request), ctypes.c_uint(len(request)), ctypes.c_char_p(message), ctypes.c_uint(len(message)))
+        return rc
     
     #ssize_t libssh2_channel_read_ex(LIBSSH2_CHANNEL *channel, int stream_id, char *buf, size_t buflen);
     #ssize_t libssh2_channel_read(LIBSSH2_CHANNEL *channel, char *buf, size_t buflen);
