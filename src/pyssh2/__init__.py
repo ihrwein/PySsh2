@@ -79,7 +79,18 @@ LIBSSH2_ERROR = {'NONE'                    :  0,
                  'ENCRYPT'                 : -44,
                  'BAD_SOCKET'              : -45}
 
+LIBSSH2_KNOWNHOST = {'TYPE_MASK'     : 0xffff,
+                     'TYPE_PLAIN'    : 1,
+                     'TYPE_SHA1'     : 2, #always base64 encoded
+                     'TYPE_CUSTOM'   : 3,
+                     'KEYENC_MASK'   : (3<<16),
+                     'KEYENC_RAW'    : (1<<16),
+                     'KEYENC_BASE64' : (2<<16)}
 
+LIBSSH2_HOSTKEY_TYPE = {0: 'UNKNOWN',
+                        1: 'RSA',
+                        2: 'DSS'}
+ 
 class Ssh2:
     
     #int libssh2_init(int flags);
