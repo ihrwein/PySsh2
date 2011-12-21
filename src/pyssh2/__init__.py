@@ -182,8 +182,8 @@ class Agent:
         self.libssh2 = parent.libssh2
         self.agent = agent
     
+    #void libssh2_agent_free(LIBSSH2_AGENT *agent);
     def __del__(self):
-        #void libssh2_agent_free(LIBSSH2_AGENT *agent);
         self.libssh2.libssh2_agent_free.restype = None
         self.libssh2.libssh2_agent_free(self.agent)
     
