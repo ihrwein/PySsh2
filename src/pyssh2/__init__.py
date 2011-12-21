@@ -128,10 +128,11 @@ class Session:
         self.libssh2.libssh2_trace.restype = None
         self.libssh2.libssh2_trace(self.session, ctypes.c_int(bitmask))
     
-    #int libssh2_session_startup(LIBSSH2_SESSION *session, int socket);
-    def session_startup(self, socket):
-        self.libssh2.libssh2_session_startup.restype = ctypes.c_int
-        rc = self.libssh2.libssh2_session_startup(self.session, ctypes.c_int(socket))
+    #int libssh2_session_handshake(LIBSSH2_SESSION *session, libssh2_socket_t socket);
+    def handshake(self, socket):
+        self.libssh2.libssh2_session_handshake.argtypes = [ctypes.POINTER(Session.SessionType), ctypes.c_int]
+        self.libssh2.libssh2_session_handshake.restype = ctypes.c_int
+        rc = self.libssh2.libssh2_session_handshake(self.session, socket.fileno())
         return rc
     
     #void libssh2_session_set_blocking(LIBSSH2_SESSION *session, int blocking);
