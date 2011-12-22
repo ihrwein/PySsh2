@@ -223,6 +223,8 @@ class Agent:
         self.libssh2.libssh2_agent_get_identity.argtypes = [ctypes.POINTER(Agent.AgentType), ctypes.POINTER(ctypes.POINTER(Agent.AgentPublicKey)), ctypes.POINTER(Agent.AgentPublicKey)]
         self.libssh2.libssh2_agent_get_identity.restype = ctypes.c_int
         rc = self.libssh2.libssh2_agent_get_identity(self.agent, ctypes.byref(store), prev)
+        if rc<0:
+            print(LIBSSH2_ERROR[rc])
         return rc
     
     #int libssh2_agent_userauth(LIBSSH2_AGENT *agent,   const char *username,   struct libssh2_agent_publickey *identity);
