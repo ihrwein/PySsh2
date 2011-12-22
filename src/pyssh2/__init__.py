@@ -340,11 +340,18 @@ class Channel:
         return rc
     
     #int libssh2_channel_process_startup(LIBSSH2_CHANNEL *channel,   const char *request,   unsigned int request_len,   const char *message,   unsigned int message_len);
-    #int libssh2_channel_exec(LIBSSH2_CHANNEL *channel, const char *command);
-    def execute(self, message, request="exec"):
+    def process_startup(self, request, message):
         self.libssh2.libssh2_channel_process_startup.restype = ctypes.c_int
         rc = self.libssh2.libssh2_channel_process_startup(self.channel, ctypes.c_char_p(request), ctypes.c_uint(len(request)), ctypes.c_char_p(message), ctypes.c_uint(len(message)))
         return rc
+    
+    #int libssh2_channel_exec(LIBSSH2_CHANNEL *channel, const char *command);
+    def execute(self, command):
+        return self.process_startup("exec", command)
+    
+    #int libssh2_channel_shell(LIBSSH2_CHANNEL *channel)
+    def shell(self):
+        return self.process_startup("shell", "")
     
     #ssize_t libssh2_channel_read_ex(LIBSSH2_CHANNEL *channel, int stream_id, char *buf, size_t buflen);
     #ssize_t libssh2_channel_read(LIBSSH2_CHANNEL *channel, char *buf, size_t buflen);
