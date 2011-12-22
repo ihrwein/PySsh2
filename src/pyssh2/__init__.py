@@ -378,3 +378,20 @@ class Channel:
     def read_stderr(self, buf):
         size = self.read_ex(buf, 1)
         return size
+    
+    #ssize_t libssh2_channel_write_ex(LIBSSH2_CHANNEL *channel,   int stream_id, char *buf,   size_t buflen);
+    def write_ex(self, stream_id, buf):
+        self.libssh2.libssh2_channel_write_ex.argtypes = [ctypes.POINTER(Channel.ChannelType), ctypes.c_int, ctypes.c_char_p, ctypes.c_size_t]
+        self.libssh2.libssh2_channel_write_ex.restype = ctypes.c_ssize_t
+        size = self.libssh2.libssh2_channel_write_ex(self.channel, stream_id, buf, len(buf))
+        return size
+    
+    #ssize_t libssh2_channel_write(LIBSSH2_CHANNEL *channel, const char *buf, size_t buflen);
+    def write(self, buf):
+        size = self.write_ex(0, buf)
+        return size
+    
+    #ssize_t libssh2_channel_write_stderr(LIBSSH2_CHANNEL *channel, const char *buf, size_t buflen);
+    def write_stderr(self, buf):
+        size = self.write_ex(1, buf)
+        return size
