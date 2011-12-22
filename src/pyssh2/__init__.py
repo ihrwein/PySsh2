@@ -157,6 +157,14 @@ class Session:
         channel = self.libssh2.libssh2_channel_open_ex(self.session, ctypes.c_char_p(channel_type), ctypes.c_uint(len(channel_type)), ctypes.c_uint(window_size), ctypes.c_uint(packet_size), ctypes.c_char_p(message), ctypes.c_uint(len(message)))
         return Channel(self, channel)
     
+    #LIBSSH2_CHANNEL * libssh2_channel_direct_tcpip_ex(LIBSSH2_SESSION *session, const char *host, int port, const char *shost, int sport);
+    #LIBSSH2_CHANNEL * libssh2_channel_direct_tcpip(LIBSSH2_SESSION *session, const char *host, int port);
+    def direct_tcpip(self, host, port, shost="127.0.0.1", sport=22):
+        self.libssh2.libssh2_channel_criect_tcpip_ex.argtypes = [ctypes.POINTER(Session.SessionType), ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_int]
+        self.libssh2.libssh2_channel.direct_tcpip_ex.restype = ctypes.POINTER(Channel.ChannelType)
+        channel = self.libssh2.libssh2_channel.direct_tcpip_ex(host, port, shost, sport)
+        return Channel(self, channel)
+    
     #LIBSSH2_AGENT *libssh2_agent_init(LIBSSH2_SESSION *session);
     def agent_init(self):
         self.libssh2.libssh2_agent_init.restype = ctypes.POINTER(Agent.AgentType)
