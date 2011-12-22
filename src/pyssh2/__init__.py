@@ -363,6 +363,20 @@ class Channel:
     def shell(self):
         return self.process_startup("shell", "")
     
+    #LIBSSH2_API int libssh2_channel_setenv_ex(LIBSSH2_CHANNEL *channel, const char *varname, unsigned int varname_len, const char *value, unsigned int value_len);
+    def setenv_ex(self, varname, value):
+        self.libssh2.libssh2_channel_setenv_ex.argtypes = [ctypes.POINTER(Channel.ChannelType), ctypes.c_char_p, ctypes.c_uint, ctypes.c_char_p, ctypes.c_uint]
+        self.libssh2.libssh2_channel_setenv_ex.restype = ctypes.c_int
+        rc = self.libssh2.libssh2_channel_setenv_ex(self.channel, varname, len(varname), value, len(value))
+        if rc<0:
+            print(LIBSSH2_ERROR[rc])
+        return rc
+    
+    #define libssh2_channel_setenv(channel, varname, value) libssh2_channel_setenv_ex((channel), (varname), strlen(varname), (value), strlen(value))
+    def setenv(self, varname, value):
+        rc = self.setenv_ex(varname, value)
+        return rc
+
     #ssize_t libssh2_channel_read_ex(LIBSSH2_CHANNEL *channel, int stream_id, char *buf, size_t buflen);
     def read_ex(self, buf, stream_id):
         self.libssh2.libssh2_channel_read_ex.restype = ctypes.c_ssize_t
