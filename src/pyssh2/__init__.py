@@ -394,8 +394,9 @@ class Channel:
 
     #ssize_t libssh2_channel_read_ex(LIBSSH2_CHANNEL *channel, int stream_id, char *buf, size_t buflen);
     def read_ex(self, buf, stream_id):
+        self.libssh2.libssh2_channel_read_ex.argtypes = [ctypes.POINTER(Channel.ChannelType), ctypes.c_int, ctypes.POINTER(ctypes.c_char), ctypes.c_size_t]
         self.libssh2.libssh2_channel_read_ex.restype = ctypes.c_ssize_t
-        size = self.libssh2.libssh2_channel_read_ex(self.channel, ctypes.c_int(stream_id), ctypes.c_char_p(buf), ctypes.c_size_t(len(buf)))
+        size = self.libssh2.libssh2_channel_read_ex(self.channel, stream_id, buf, len(buf))
         return size
     
     #ssize_t libssh2_channel_read(LIBSSH2_CHANNEL *channel, char *buf, size_t buflen);
