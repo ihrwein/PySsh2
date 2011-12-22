@@ -348,20 +348,21 @@ class Channel:
         return rc
     
     #int libssh2_channel_process_startup(LIBSSH2_CHANNEL *channel,   const char *request,   unsigned int request_len,   const char *message,   unsigned int message_len);
-    def process_startup(self, request, message):
+    def process_startup(self, request, request_len, message, message_len):
+        self.libssh2.libssh2_channel_process_startup.argtypes = [ctypes.POINTER(Channel.ChannelType), ctypes.c_char_p, ctypes.c_uint, ctypes.c_char_p, ctypes.c_uint]
         self.libssh2.libssh2_channel_process_startup.restype = ctypes.c_int
-        rc = self.libssh2.libssh2_channel_process_startup(self.channel, ctypes.c_char_p(request), ctypes.c_uint(len(request)), ctypes.c_char_p(message), ctypes.c_uint(len(message)))
+        rc = self.libssh2.libssh2_channel_process_startup(self.channel, request, request_len, message, message_len)
         if rc<0:
             print(LIBSSH2_ERROR[rc])
         return rc
     
     #int libssh2_channel_exec(LIBSSH2_CHANNEL *channel, const char *command);
     def execute(self, command):
-        return self.process_startup("exec", command)
+        return self.process_startup("exec", len("exec"), command, len(command))
     
     #int libssh2_channel_shell(LIBSSH2_CHANNEL *channel)
     def shell(self):
-        return self.process_startup("shell", "")
+        return self.process_startup("shell", len("shell"), None, 0)
     
     #int libssh2_channel_request_pty_ex(LIBSSH2_CHANNEL *channel, const char *term, unsigned int term_len, const char *modes, unsigned int modes_len, int width, int height, int width_px, int height_px);
     def request_pty_ex(self, term, modes, width, height, width_px, height_px):
