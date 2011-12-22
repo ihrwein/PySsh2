@@ -362,13 +362,17 @@ class Channel:
         return self.process_startup("shell", "")
     
     #ssize_t libssh2_channel_read_ex(LIBSSH2_CHANNEL *channel, int stream_id, char *buf, size_t buflen);
-    #ssize_t libssh2_channel_read(LIBSSH2_CHANNEL *channel, char *buf, size_t buflen);
-    def read(self, buf, stream_id=0):
+    def read_ex(self, buf, stream_id):
         self.libssh2.libssh2_channel_read_ex.restype = ctypes.c_ssize_t
         size = self.libssh2.libssh2_channel_read_ex(self.channel, ctypes.c_int(stream_id), ctypes.c_char_p(buf), ctypes.c_size_t(len(buf)))
         return size
     
+    #ssize_t libssh2_channel_read(LIBSSH2_CHANNEL *channel, char *buf, size_t buflen);
+    def read(self, buf):
+        size = self.read_ex(buf, 0)
+        return size
+    
     #ssize_t libssh2_channel_read_stderr(LIBSSH2_CHANNEL *channel, char *buf, size_t buflen);
     def read_stderr(self, buf):
-        size = self.read(buf, stream_id=1)
+        size = self.read_ex(buf, 1)
         return size
