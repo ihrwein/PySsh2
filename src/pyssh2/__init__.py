@@ -191,6 +191,18 @@ class Session:
         self.libssh2.libssh2_userauth_password_ex.restype = ctypes.c_int
         rc = self.libssh2.libssh2_userauth_password_ex(self.session, ctypes.c_char_p(username), ctypes.c_uint(len(username)), ctypes.c_char_p(password), ctypes.c_uint(len(password)), ctypes.c_void_p(passwd_change_cb))
         return rc
+    
+    def userauth_agent(self, username):
+        authenticated = False
+        agent = self.agent_init()
+        agent.connect()
+        agent.list_identities()
+        identity = ctypes.POINTER(Agent.AgentPublicKey)()
+        prev = None
+        while (not agent.get_identity(identity, prev)) and (not authenticated):
+            authenticated = (not agent.userauth(username, identity))
+            prev = identity
+        return authenticated
 
 
 class KnownHosts:
