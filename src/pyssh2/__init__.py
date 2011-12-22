@@ -172,6 +172,12 @@ class Session:
         key = self.libssh2.libssh2_session_hostkey(self.session, ctypes.byref(keyLen), ctypes.byref(keyType))
         return (key, keyLen, LIBSSH2_HOSTKEY_TYPE[keyType.value])
     
+    #LIBSSH2_KNOWNHOSTS *libssh2_knownhost_init(LIBSSH2_SESSION *session);
+    def knownhost_init(self):
+        self.libssh2.libssh2_knownhost_init.restype = ctypes.POINTER(KnownHosts.KnownHostsType)
+        knownHosts = self.libssh2.libssh2_knownhost_init(self.session)
+        return KnownHosts(self, knownHosts)
+    
     #char * libssh2_userauth_list(LIBSSH2_SESSION *session, const char *username, unsigned int username_len);
     def userauth_list(self, username):
         self.libssh2.libssh2_userauth_list.restype = ctypes.c_char_p
@@ -185,6 +191,63 @@ class Session:
         self.libssh2.libssh2_userauth_password_ex.restype = ctypes.c_int
         rc = self.libssh2.libssh2_userauth_password_ex(self.session, ctypes.c_char_p(username), ctypes.c_uint(len(username)), ctypes.c_char_p(password), ctypes.c_uint(len(password)), ctypes.c_void_p(passwd_change_cb))
         return rc
+
+
+class KnownHosts:
+    
+    class KnownHostsType(ctypes.Structure):
+        pass
+    
+    class KnownHost(ctypes.Structure):
+        pass
+    
+    CHECK = {0 : 'MATCH',
+             1 : 'MISMATCH',
+             2 : 'NOTFOUND',
+             3 : 'FAILURE'}
+    
+    def __init__(self, parent, knownHosts):
+        self.parent = parent
+        self.session = parent.session
+        self.libssh2 = parent.libssh2
+        self.knownHosts = knownHosts
+    
+    #void libssh2_knownhost_free(LIBSSH2_KNOWNHOSTS *hosts);
+    def __del__(self):
+        self.libssh2.libssh2_knownhost_free.restype = None
+        self.libssh2.libssh2_knownhost_free(self.knownHosts)
+    
+    #int libssh2_knownhost_readfile(LIBSSH2_KNOWNHOSTS *hosts,   const char *filename, int type);
+    def readfile(self, filename, type=1):
+        self.libssh2.libssh2_knownhost_readfile.argtypes = [ctypes.POINTER(KnownHosts.KnownHostsType), ctypes.c_char_p, ctypes.c_int]
+        self.libssh2.libssh2_knownhost_readfile.restype = ctypes.c_int
+        rc = self.libssh2.libssh2_knownhost_readfile(self.knownHosts, filename, type)
+        if rc<0:
+            print(LIBSSH2_ERROR[rc])
+        return rc
+    
+    #int libssh2_knownhost_get(LIBSSH2_KNOWNHOSTS *hosts,   struct libssh2_knownhost **store,   struct libssh2_knownhost *prev):
+    def get(self, store, prev):
+        self.libssh2.libssh2_knownhost_get.argtypes = [ctypes.POINTER(KnownHosts.KnownHostsType), ctypes.POINTER(ctypes.POINTER(KnownHosts.KnownHost)), ctypes.POINTER(KnownHosts.KnownHost)]
+        self.libssh2.libssh2_knownhost_get.restype = ctypes.c_int
+        rc = self.libssh2.libssh2_knownhost_get(self.knownHosts, ctypes.byref(store), prev)
+        return rc
+    
+    #int libssh2_knownhost_check(LIBSSH2_KNOWNHOSTS *hosts,   const char *host,   const char *key, size_t keylen,   int typemask,   struct libssh2_knownhost **knownhost);
+    def check(self, host, key, keyLen, typemask):
+        self.libssh2.libssh2_knownhost_check.argtypes = [ctypes.POINTER(KnownHosts.KnownHostsType), ctypes.c_char_p, ctypes.POINTER(ctypes.c_char), ctypes.c_size_t, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(KnownHosts.KnownHost))]
+        self.libssh2.libssh2_knownhost_check.restype = ctypes.c_int
+        knownhost = ctypes.POINTER(KnownHosts.KnownHost)()
+        rc = self.libssh2.libssh2_knownhost_check(self.knownHosts, host, key, keyLen, typemask, ctypes.byref(knownhost))
+        return KnownHosts.CHECK[rc]
+    
+    #int libssh2_knownhost_checkp(LIBSSH2_KNOWNHOSTS *hosts,   const char *host, int port,   const char *key, size_t keylen,   int typemask,   struct libssh2_knownhost **knownhost);
+    def checkp(self, host, port, key, keyLen, typemask):
+        self.libssh2.libssh2_knownhost_checkp.argtypes = [ctypes.POINTER(KnownHosts.KnownHostsType), ctypes.c_char_p, ctypes.c_int, ctypes.POINTER(ctypes.c_char), ctypes.c_size_t, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(KnownHosts.KnownHost))]
+        self.libssh2.libssh2_knownhost_checkp.restype = ctypes.c_int
+        knownhost = ctypes.POINTER(KnownHosts.KnownHost)()
+        rc = self.libssh2.libssh2_knownhost_checkp(self.knownHosts, host, port, key, keyLen, typemask, ctypes.byref(knownhost))
+        return KnownHosts.CHECK[rc]
 
 
 class Agent:
