@@ -363,6 +363,20 @@ class Channel:
     def shell(self):
         return self.process_startup("shell", "")
     
+    #int libssh2_channel_request_pty_ex(LIBSSH2_CHANNEL *channel, const char *term, unsigned int term_len, const char *modes, unsigned int modes_len, int width, int height, int width_px, int height_px);
+    def request_pty_ex(self, term, modes, width, height, width_px, height_px):
+        self.libssh2.libssh2_channel_request_pty_ex.argtypes = [ctypes.POINTER(Channel.ChannelType), ctypes.c_char_p, ctypes.c_uint, ctypes.c_char_p, ctypes.c_uint, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
+        self.libssh2.libssh2_channel_request_pty_ex.restype = ctypes.c_int
+        rc = self.libssh2.libssh2_channel_request_pty_ex(self.channel, term, len(term), modes, len(modes), width, height, width_px, height_px)
+        if rc<0:
+            print(LIBSSH2_ERROR[rc])
+        return rc
+
+    #int libssh2_channel_request_pty(LIBSSH2_CHANNEL *channel, char *term);
+    def request_pty(self, term):
+        rc = self.request_pty_ex(term, "", 80, 24, 0, 0)
+        return rc
+    
     #LIBSSH2_API int libssh2_channel_setenv_ex(LIBSSH2_CHANNEL *channel, const char *varname, unsigned int varname_len, const char *value, unsigned int value_len);
     def setenv_ex(self, varname, value):
         self.libssh2.libssh2_channel_setenv_ex.argtypes = [ctypes.POINTER(Channel.ChannelType), ctypes.c_char_p, ctypes.c_uint, ctypes.c_char_p, ctypes.c_uint]
