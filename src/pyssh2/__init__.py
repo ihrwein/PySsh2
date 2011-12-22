@@ -351,6 +351,8 @@ class Channel:
     def process_startup(self, request, message):
         self.libssh2.libssh2_channel_process_startup.restype = ctypes.c_int
         rc = self.libssh2.libssh2_channel_process_startup(self.channel, ctypes.c_char_p(request), ctypes.c_uint(len(request)), ctypes.c_char_p(message), ctypes.c_uint(len(message)))
+        if rc<0:
+            print(LIBSSH2_ERROR[rc])
         return rc
     
     #int libssh2_channel_exec(LIBSSH2_CHANNEL *channel, const char *command);
