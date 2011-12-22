@@ -163,6 +163,15 @@ class Session:
         agent = self.libssh2.libssh2_agent_init(self.session)
         return Agent(self, agent)
     
+    #const char *libssh2_session_hostkey(LIBSSH2_SESSION *session,   size_t *len, int *type);
+    def hostkey(self):
+        self.libssh2.libssh2_session_hostkey.argtypes = [ctypes.POINTER(Session.SessionType), ctypes.POINTER(ctypes.c_size_t), ctypes.POINTER(ctypes.c_int)]
+        self.libssh2.libssh2_session_hostkey.restype = ctypes.POINTER(ctypes.c_char)
+        keyLen = ctypes.c_size_t(0)
+        keyType = ctypes.c_int(0)
+        key = self.libssh2.libssh2_session_hostkey(self.session, ctypes.byref(keyLen), ctypes.byref(keyType))
+        return (key, keyLen, LIBSSH2_HOSTKEY_TYPE[keyType.value])
+    
     #char * libssh2_userauth_list(LIBSSH2_SESSION *session, const char *username, unsigned int username_len);
     def userauth_list(self, username):
         self.libssh2.libssh2_userauth_list.restype = ctypes.c_char_p
