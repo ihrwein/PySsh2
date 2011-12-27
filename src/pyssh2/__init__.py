@@ -101,8 +101,9 @@ class Ssh2:
     #LIBSSH2_SESSION * libssh2_session_init_ex(LIBSSH2_ALLOC_FUNC((*myalloc)), LIBSSH2_FREE_FUNC((*myfree)), LIBSSH2_REALLOC_FUNC((*myrealloc)), void *abstract);
     #LIBSSH2_SESSION * libssh2_session_init(void);
     def session_init(self, myalloc=None, myfree=None, myrealloc=None, abstract=None):
+        self.libssh2.libssh2_session_init_ex.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
         self.libssh2.libssh2_session_init_ex.restype = ctypes.POINTER(Session.SessionType)
-        session = self.libssh2.libssh2_session_init_ex(ctypes.c_void_p(myalloc), ctypes.c_void_p(myfree), ctypes.c_void_p(myrealloc), ctypes.c_void_p(abstract))
+        session = self.libssh2.libssh2_session_init_ex(myalloc, myfree, myrealloc, abstract)
         return Session(self, session)
 
 
