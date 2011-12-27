@@ -243,6 +243,7 @@ class KnownHosts:
     
     #void libssh2_knownhost_free(LIBSSH2_KNOWNHOSTS *hosts);
     def __del__(self):
+        self.libssh2.libssh2_knownhost_free.argtypes = [ctypes.POINTER(KnownHosts.KnownHostsType)]
         self.libssh2.libssh2_knownhost_free.restype = None
         self.libssh2.libssh2_knownhost_free(self.knownHosts)
     
