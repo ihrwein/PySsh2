@@ -352,11 +352,13 @@ class Channel:
     
     #int libssh2_channel_free(LIBSSH2_CHANNEL *channel);
     def __del__(self):
+        self.libssh2.libssh2_channel_free.argtypes = [ctypes.POINTER(Channel.ChannelType)]
         self.libssh2.libssh2_channel_free.restype = ctypes.c_int
         rc = self.libssh2.libssh2_channel_free(self.channel)
     
     #int libssh2_channel_close(LIBSSH2_CHANNEL *channel);
     def close(self):
+        self.libssh2.libssh2_channel_close.argtypes = [ctypes.POINTER(Channel.ChannelType)]
         self.libssh2.libssh2_channel_close.restype = ctypes.c_int
         rc = self.libssh2.libssh2_channel_close(self.channel)
         return rc
