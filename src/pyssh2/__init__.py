@@ -124,20 +124,23 @@ class Session:
     
     #int libssh2_session_disconnect_ex(LIBSSH2_SESSION *session, int reason, const char *description, const char *lang);
     def disconnect(self, description, reason=SSH_DISCONNECT['BY_APPLICATION'], lang=""):
+        self.libssh2.libssh2_disconnect_ex.argtypes = [ctypes.POINTER(Session.SessionType), ctypes.c_int, ctypes.c_char_p, ctypes.c_char_p]
         self.libssh2.libssh2_disconnect_ex.restype = ctypes.c_int
-        rc = self.libssh2.session_disconnect_ex(self.session, ctypes.c_int(reason), ctypes.c_char_p(description), ctypes.c_char_p(lang))
+        rc = self.libssh2.session_disconnect_ex(self.session, reason, description, lang)
         return rc
     
     #int libssh2_session_banner_set(LIBSSH2_SESSION *session, const char *banner);
     def banner_set(self, banner="SSH-2.0-libssh2_1.3.0"):
+        self.libssh2.libssh2_banner_set.argtypes = [ctypes.POINTER(Session.SessionType), ctypes.c_char_p]
         self.libssh2.libssh2_banner_set.restype = ctypes.c_int
-        rc = self.libssh2.libssh2_banner_set(self.session, ctypes.c_char_p(banner))
+        rc = self.libssh2.libssh2_banner_set(self.session, banner)
         return rc
     
     #void libssh2_trace(LIBSSH2_SESSION *session, int bitmask);
     def trace(self, bitmask):
+        self.libssh2.libssh2_trace.argtypes = [ctypes.POINTER(Session.SessionType), ctypes.c_int]
         self.libssh2.libssh2_trace.restype = None
-        self.libssh2.libssh2_trace(self.session, ctypes.c_int(bitmask))
+        self.libssh2.libssh2_trace(self.session, bitmask)
     
     #int libssh2_session_handshake(LIBSSH2_SESSION *session, libssh2_socket_t socket);
     def handshake(self, socket):
