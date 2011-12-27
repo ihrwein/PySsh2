@@ -151,14 +151,16 @@ class Session:
     
     #void libssh2_session_set_blocking(LIBSSH2_SESSION *session, int blocking);
     def set_blocking(self, blocking):
+        self.libssh2.libssh2_set_blocking.argtypes = [ctypes.POINTER(Session.SessionType), ctypes.c_int]
         self.libssh2.libssh2_set_blocking.restype = None
-        self.libssh2.libssh2_set_blocking(self.session, ctypes.c_int(blocking))
+        self.libssh2.libssh2_set_blocking(self.session, blocking)
     
     #LIBSSH2_CHANNEL * libssh2_channel_open_ex(LIBSSH2_SESSION *session, const char *channel_type, unsigned int channel_type_len, unsigned int window_size, unsigned int packet_size, const char *message, unsigned int message_len);
     #LIBSSH2_CHANNEL * libssh2_channel_open_session(LIBSSH2_SESSION *session);
     def channel_open(self, channel_type="session", window_size=256*1024, packet_size=32768, message=""):
+        self.libssh2.libssh2_channel_open_ex.argtypes = [ctypes.POINTER(Session.SessionType), ctypes.c_char_p, ctypes.c_uint, ctypes.c_uint, ctypes.c_uint, ctypes.c_char_p, ctypes.c_uint]
         self.libssh2.libssh2_channel_open_ex.restype = ctypes.POINTER(Channel.ChannelType)
-        channel = self.libssh2.libssh2_channel_open_ex(self.session, ctypes.c_char_p(channel_type), ctypes.c_uint(len(channel_type)), ctypes.c_uint(window_size), ctypes.c_uint(packet_size), ctypes.c_char_p(message), ctypes.c_uint(len(message)))
+        channel = self.libssh2.libssh2_channel_open_ex(self.session, channel_type, len(channel_type), window_size, packet_size, message, len(message))
         return Channel(self, channel)
     
     #LIBSSH2_CHANNEL * libssh2_channel_direct_tcpip_ex(LIBSSH2_SESSION *session, const char *host, int port, const char *shost, int sport);
@@ -171,6 +173,7 @@ class Session:
     
     #LIBSSH2_AGENT *libssh2_agent_init(LIBSSH2_SESSION *session);
     def agent_init(self):
+        self.libssh2.libssh2_agent_init.argtypes = [ctypes.POINTER(Session.SessionType)]
         self.libssh2.libssh2_agent_init.restype = ctypes.POINTER(Agent.AgentType)
         agent = self.libssh2.libssh2_agent_init(self.session)
         return Agent(self, agent)
@@ -186,22 +189,24 @@ class Session:
     
     #LIBSSH2_KNOWNHOSTS *libssh2_knownhost_init(LIBSSH2_SESSION *session);
     def knownhost_init(self):
+        self.libssh2.libssh2_knownhost_init.argtypes = [ctypes.POINTER(Session.SessionType)]
         self.libssh2.libssh2_knownhost_init.restype = ctypes.POINTER(KnownHosts.KnownHostsType)
         knownHosts = self.libssh2.libssh2_knownhost_init(self.session)
         return KnownHosts(self, knownHosts)
     
     #char * libssh2_userauth_list(LIBSSH2_SESSION *session, const char *username, unsigned int username_len);
     def userauth_list(self, username):
+        self.libssh2.libssh2_userauth_list.argtypes = [ctypes.POINTER(Session.SessionType), ctypes.c_char_p, ctypes.c_uint]
         self.libssh2.libssh2_userauth_list.restype = ctypes.c_char_p
-        result = self.libssh2.libssh2_userauth_list(self.session, ctypes.c_char_p(username), ctypes.c_uint(len(username)))
+        result = self.libssh2.libssh2_userauth_list(self.session, username, len(username))
         return result
     
     #int libssh2_userauth_password_ex(LIBSSH2_SESSION *session,   const char *username,   unsigned int username_len,   const char *password,   unsigned int password_len,   LIBSSH2_PASSWD_CHANGEREQ_FUNC((*passwd_change_cb)));
     #int libssh2_userauth_password(LIBSSH2_SESSION *session,   const char *username,   const char *password);
     def userauth_password(self, username, password, passwd_change_cb=None):
-        #self.libssh2.libssh2_userauth_password_ex.argtypes = [POINTER(LibSsh2Session), c_char_p, c_uint, c_char_p, c_uint, c_void_p]
+        self.libssh2.libssh2_userauth_password_ex.argtypes = [ctypes.POINTER(Session.SessionType), ctypes.c_char_p, ctypes.c_uint, ctypes.c_char_p, ctypes.c_uint, ctypes.c_void_p]
         self.libssh2.libssh2_userauth_password_ex.restype = ctypes.c_int
-        rc = self.libssh2.libssh2_userauth_password_ex(self.session, ctypes.c_char_p(username), ctypes.c_uint(len(username)), ctypes.c_char_p(password), ctypes.c_uint(len(password)), ctypes.c_void_p(passwd_change_cb))
+        rc = self.libssh2.libssh2_userauth_password_ex(self.session, username, len(username), password, len(password), passwd_change_cb)
         return rc
     
     def userauth_agent(self, username):
