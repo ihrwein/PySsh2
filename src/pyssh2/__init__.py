@@ -296,17 +296,20 @@ class Agent:
     
     #void libssh2_agent_free(LIBSSH2_AGENT *agent);
     def __del__(self):
+        self.libssh2.libssh2_agent_free.argtypes = [ctypes.POINTER(Agent.AgentType)]
         self.libssh2.libssh2_agent_free.restype = None
         self.libssh2.libssh2_agent_free(self.agent)
     
     #int libssh2_agent_connect(LIBSSH2_AGENT *agent);
     def connect(self):
+        self.libssh2.libssh2_agent_connect.argtypes = [ctypes.POINTER(Agent.AgentType)]
         self.libssh2.libssh2_agent_connect.restype = ctypes.c_int
         rc = self.libssh2.libssh2_agent_connect(self.agent)
         return rc
     
     #int libssh2_agent_list_identities(LIBSSH2_AGENT *agent);
     def list_identities(self):
+        self.libssh2.libssh2_agent_list_identities.argtypes = [ctypes.POINTER(Agent.AgentType)]
         self.libssh2.libssh2_agent_list_identities.restype = ctypes.c_int
         rc = self.libssh2.libssh2_agent_list_identities(self.agent)
         return rc
@@ -329,6 +332,7 @@ class Agent:
     
     #int libssh2_agent_disconnect(LIBSSH2_AGENT *agent);
     def disconnect(self):
+        self.libssh2.libssh2_agent_disconnect.argtypes = [ctypes.POINTER(Agent.AgentType)]
         self.libssh2.libssh2_agent_disconnect.restype = ctypes.c_int
         rc = self.libssh2.libssh2_agent_disconnect(self.agent)
         return rc
