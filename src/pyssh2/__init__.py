@@ -219,6 +219,14 @@ class Session:
             authenticated = (not agent.userauth(username, identity))
             prev = identity
         return authenticated
+    
+    #LIBSSH2_CHANNEL * libssh2_scp_recv(LIBSSH2_SESSION *session, const char *path, struct stat *sb);
+    def scp_recv(self, path):
+        stat = " "*1024
+        self.libssh2.libssh2_scp_recv.argtypes = [ctypes.POINTER(Session.SessionType), ctypes.c_char_p, ctypes.c_char_p]
+        self.libssh2.libssh2_scp_recv.restype = ctypes.POINTER(Channel.ChannelType)
+        channel = self.libssh2.libssh2_scp_recv(self.session, path, stat)
+        return Channel(self, channel)
 
 
 class KnownHosts:
