@@ -1,4 +1,5 @@
 import time
+import os
 import socket
 import ctypes
 
@@ -192,6 +193,13 @@ class Session:
         self.libssh2.libssh2_knownhost_init.restype = ctypes.POINTER(KnownHosts.KnownHostsType)
         knownHosts = self.libssh2.libssh2_knownhost_init(self.session)
         return KnownHosts(self, knownHosts)
+    
+    def isKnownHost(self, hostname, port, known_hosts="~/.ssh/known_hosts"):
+        home = (os.getenv('USERPROFILE') or os.getenv('HOME'))
+        (key, keyLen, keyType) = self.hostkey()
+        knownHosts = self.knownhost_init()
+        knownHosts.readfile(known_hosts.replace("~", home))
+        return (knownHosts.checkp(hostname, port, key, keyLen, LIBSSH2_KNOWNHOST['TYPE_PLAIN']|LIBSSH2_KNOWNHOST['KEYENC_RAW']) == 'MATCH')
     
     #char * libssh2_userauth_list(LIBSSH2_SESSION *session, const char *username, unsigned int username_len);
     def userauth_list(self, username):
