@@ -1,5 +1,4 @@
 import time
-import libssh2
 import socket
 import ctypes
 
