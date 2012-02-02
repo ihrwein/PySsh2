@@ -241,6 +241,12 @@ class Session:
         self.libssh2.libssh2_scp_recv.restype = ctypes.POINTER(Channel.ChannelType)
         channel = self.libssh2.libssh2_scp_recv(self.session, path, stat)
         return Channel(self, channel)
+    
+    def sftp_init(self):
+        self.libssh2.libssh2_sftp_init.argtypes = [ctypes.POINTER(Session.SessionType)]
+        self.libssh2.libssh2_sftp_init.restype = ctypes.POINTER(SFTP.SFTPType)
+        sftp = self.libssh2.libssh2_sftp_init(self.session)
+        return SFTP(self, sftp)
 
 
 class KnownHosts:
@@ -482,3 +488,187 @@ class Channel:
     def flush_stderr(self):
         rc = self.flush_ex(1)
         return rc
+
+
+
+
+
+class SFTP:
+    
+    class SFTPType(ctypes.Structure):
+        pass
+    
+    OPEN = {'FILE' : 0,
+            'DIR'  : 1}
+    
+    FXF = {'READ'   : (1<<0),
+           'WRITE'  : (1<<1),
+           'APPEND' : (1<<2),
+           'CREAT'  : (1<<3),
+           'TRUNC'  : (1<<4),
+           'EXCL'   : (1<<5)}
+    
+    S = {'IRWXU' : 0000700,
+         'IRUSR' : 0000400,
+         'IWUSR' : 0000200,
+         'IXUSR' : 0000100,
+         'IRWXG' : 0000070,
+         'IRGRP' : 0000040,
+         'IWGRP' : 0000020,
+         'IXGRP' : 0000010,
+         'IRWXO' : 0000007,
+         'IROTH' : 0000004,
+         'IWOTH' : 0000002,
+         'IXOTH' : 0000001}
+    
+    def __init__(self, parent, sftp):
+        self.parent = parent
+        self.session = parent.session
+        self.libssh2 = parent.libssh2
+        self.sftp = sftp
+    
+    #int libssh2_sftp_shutdown(LIBSSH2_SFTP *sftp);
+    def __del__(self):
+        self.libssh2.libssh2_sftp_shutdown.argtypes = [ctypes.POINTER(SFTP.SFTPType)]
+        self.libssh2.libssh2_sftp_shutdown.restype = ctypes.c_int
+        rc = self.libssh2.libssh2_sftp_shutdown(self.sftp)
+    
+    #LIBSSH2_SFTP_HANDLE * libssh2_sftp_open_ex(LIBSSH2_SFTP *sftp, const char *filename,   unsigned int filename_len, unsigned long flags,   long mode, int open_type);
+    def open_ex(self, path, flags, mode, open_type):
+        self.libssh2.libssh2_sftp_open_ex.argtypes = [ctypes.POINTER(SFTP.SFTPType), ctypes.c_char_p, ctypes.c_uint, ctypes.c_ulong, ctypes.c_long, ctypes.c_int]
+        self.libssh2.libssh2_sftp_open_ex.restype = ctypes.POINTER(SFTPHandle.SFTPHandleType)
+        sftpHandle = self.libssh2.libssh2_sftp_open_ex(self.sftp, path, len(path), flags, mode, open_type)
+        return sftpHandle
+
+    #LIBSSH2_SFTP_HANDLE * libssh2_sftp_open(LIBSSH2_SFTP *sftp, const char *path, unsigned long flags, long mode);
+    def openfile(self, path, flags=FXF['READ'], mode=0):
+        sftpHandle = self.open_ex(path, flags, mode, SFTP.OPEN['FILE'])
+        return SFTPHandle(self, sftpHandle, path)
+    
+    #unsigned long libssh2_sftp_last_error(LIBSSH2_SFTP *sftp);
+    def last_error(self):
+        self.libssh2.libssh2_sftp_last_error.argtypes = [ctypes.POINTER(SFTP.SFTPType)]
+        self.libssh2.libssh2_sftp_last_error.restype = ctypes.c_ulong
+        rc = self.libssh2.libssh2_sftp_last_error(self.sftp)
+        return rc
+
+
+class SFTPHandle:
+    
+    class SFTPHandleType(ctypes.Structure):
+        pass
+    
+    class SFTPAttributes(ctypes.Structure):
+        _fields_ = [('flags', ctypes.c_ulong),
+                    ('filesize', ctypes.c_uint64),
+                    ('uid', ctypes.c_ulong),
+                    ('gid', ctypes.c_ulong),
+                    ('permissions', ctypes.c_ulong),
+                    ('atime', ctypes.c_ulong),
+                    ('mtime', ctypes.c_ulong)]
+ 
+    SEEK_SET = 0
+    SEEK_CUR = 1
+    SEEK_END = 2
+    
+    def __init__(self, parent, sftpHandle, path):
+        self.parent = parent
+        self.session = parent.session
+        self.libssh2 = parent.libssh2
+        self.sftpHandle = sftpHandle
+        self.path = path
+    
+    #int libssh2_sftp_close_handle(LIBSSH2_SFTP_HANDLE *handle);
+    def __del__(self):
+        self.libssh2.libssh2_sftp_close_handle.argtypes = [ctypes.POINTER(SFTPHandle.SFTPHandleType)]
+        self.libssh2.libssh2_sftp_close_handle.restype = ctypes.c_int
+        rc = self.libssh2.libssh2_sftp_close_handle(self.sftpHandle)
+    
+    #ssize_t libssh2_sftp_read(LIBSSH2_SFTP_HANDLE *handle, char *buffer, size_t buffer_maxlen);
+    def read(self, buffer):
+        self.libssh2.libssh2_sftp_read.argtypes = [ctypes.POINTER(SFTPHandle.SFTPHandleType), ctypes.POINTER(ctypes.c_char), ctypes.c_size_t]
+        self.libssh2.libssh2_sftp_read.restype = ctypes.c_ssize_t
+        size = self.libssh2.libssh2_sftp_read(self.sftpHandle, buffer, len(buffer))
+        return size
+    
+    #void libssh2_sftp_seek64(LIBSSH2_SFTP_HANDLE *handle,   libssh2_uint64_t offset);
+    def seek64(self, offset):
+        self.libssh2.libssh2_sftp_seek64.argtypes = [ctypes.POINTER(SFTPHandle.SFTPHandleType), ctypes.c_uint64]
+        self.libssh2.libssh2_sftp_seek64.restype = None
+        self.libssh2.libssh2_sftp_seek64(self.sftpHandle, offset)
+    
+    #libssh2_uint64_t libssh2_sftp_tell64(LIBSSH2_SFTP_HANDLE *handle);
+    def tell64(self):
+        self.libssh2.libssh2_sftp_tell64.argtypes = [ctypes.POINTER(SFTPHandle.SFTPHandleType)]
+        self.libssh2.libssh2_sftp_tell64.restype = ctypes.c_uint64
+        pos = self.libssh2.libssh2_sftp_tell64(self.sftpHandle)
+        return pos
+    
+    #int libssh2_sftp_fstat_ex(LIBSSH2_SFTP_HANDLE *handle,   LIBSSH2_SFTP_ATTRIBUTES *attrs, int setstat)
+    def fstat_ex(self, attrs, setstat):
+        self.libssh2.libssh2_sftp_fstat_ex.argtypes = [ctypes.POINTER(SFTPHandle.SFTPHandleType), ctypes.POINTER(SFTPHandle.SFTPAttributes), ctypes.c_int]
+        self.libssh2.libssh2_sftp_fstat_ex.restype = ctypes.c_int
+        rc = self.libssh2.libssh2_sftp_fstat_ex(self.sftpHandle, attrs, setstat)
+        return rc
+    
+    #define libbssh2_sftp_fstat(handle, attrs) \   libssh2_sftp_fstat_ex((handle), (attrs), 0)
+    def fstat(self):
+        attrs = SFTPHandle.SFTPAttributes()
+        self.fstat_ex(attrs, 0)
+        return attrs
+    
+    #define libssh2_sftp_fsetstat(handle, attrs) \   libssh2_sftp_fstat_ex((handle), (attrs), 1)
+    def fsetstat(self, attrs):
+        self.fstat_ex(attrs, 1)
+    
+    #ssize_t libssh2_sftp_write(LIBSSH2_SFTP_HANDLE *handle,   const char *buffer,   size_t count);
+    def write(self, buffer):
+        self.libssh2.libssh2_sftp_write.argtypes = [ctypes.POINTER(SFTPHandle.SFTPHandleType), ctypes.c_char_p, ctypes.c_size_t]
+        self.libssh2.libssh2_sftp_write.restype = ctypes.c_ssize_t
+        count = self.libssh2.libssh2_sftp_write(self.sftpHandle, buffer, len(buffer))
+        return count
+    
+    def asFile(self):
+        return SftpFile(self)
+    
+
+class SftpFile:
+    
+    def __init__(self, sftpHandle):
+        self._sftpHandle = sftpHandle
+        username = self._sftpHandle.parent.parent.username
+        (ip, port) = self._sftpHandle.parent.parent.socket.getpeername()
+        path = self._sftpHandle.path
+        self.name = "sftp://%s@%s:%i%s"%(username, ip, port, path)
+    
+    def seek(self, offset, whence=os.SEEK_SET):
+        if whence == os.SEEK_SET:
+            self._sftpHandle.seek64(offset)
+        elif whence == os.SEEK_CUR:
+            self._sftpHandle.seek64(self._sftpHandle.tell64()+offset)
+        elif whence == os.SEEK_END:
+            attrs = SFTPHandle.SFTPAttributes()
+            self._sftpHandle.fstat(attrs)
+            self._sftpHandle.seek64(attrs.filesize+offset)
+    
+    def tell(self):
+        pos = self._sftpHandle.tell64()
+        return pos
+    
+    def read(self, size=-1):
+        result = ""
+        if size<0:
+            buffer = " "*1024
+            count = self._sftpHandle.read(buffer)
+            while count>0:
+                result += buffer[:count]
+                buffer = " "*1024
+                count = self._sftpHandle.read(buffer)
+        elif size>0:
+            buffer = " "*min(1024, size-len(result))
+            count = self._sftpHandle.read(buffer)
+            while count>0:
+                result += buffer[:count]
+                buffer = " "*min(1024, size-len(result))
+                count = self._sftpHandle.read(buffer)
+        return result
