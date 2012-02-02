@@ -116,6 +116,8 @@ class Session:
         self.parent = parent
         self.libssh2 = parent.libssh2
         self.session = session
+        self.socket = None
+        self.username = None
     
     #int libssh2_channel_free(LIBSSH2_CHANNEL *channel);
     def __del__(self):
@@ -144,6 +146,7 @@ class Session:
     
     #int libssh2_session_handshake(LIBSSH2_SESSION *session, libssh2_socket_t socket);
     def handshake(self, socket):
+        self.socket = socket
         self.libssh2.libssh2_session_handshake.argtypes = [ctypes.POINTER(Session.SessionType), ctypes.c_int]
         self.libssh2.libssh2_session_handshake.restype = ctypes.c_int
         rc = self.libssh2.libssh2_session_handshake(self.session, socket.fileno())
@@ -203,6 +206,7 @@ class Session:
     
     #char * libssh2_userauth_list(LIBSSH2_SESSION *session, const char *username, unsigned int username_len);
     def userauth_list(self, username):
+        self.username = username
         self.libssh2.libssh2_userauth_list.argtypes = [ctypes.POINTER(Session.SessionType), ctypes.c_char_p, ctypes.c_uint]
         self.libssh2.libssh2_userauth_list.restype = ctypes.c_char_p
         result = self.libssh2.libssh2_userauth_list(self.session, username, len(username))
@@ -211,12 +215,14 @@ class Session:
     #int libssh2_userauth_password_ex(LIBSSH2_SESSION *session,   const char *username,   unsigned int username_len,   const char *password,   unsigned int password_len,   LIBSSH2_PASSWD_CHANGEREQ_FUNC((*passwd_change_cb)));
     #int libssh2_userauth_password(LIBSSH2_SESSION *session,   const char *username,   const char *password);
     def userauth_password(self, username, password, passwd_change_cb=None):
+        self.username = username
         self.libssh2.libssh2_userauth_password_ex.argtypes = [ctypes.POINTER(Session.SessionType), ctypes.c_char_p, ctypes.c_uint, ctypes.c_char_p, ctypes.c_uint, ctypes.c_void_p]
         self.libssh2.libssh2_userauth_password_ex.restype = ctypes.c_int
         rc = self.libssh2.libssh2_userauth_password_ex(self.session, username, len(username), password, len(password), passwd_change_cb)
         return rc
     
     def userauth_agent(self, username):
+        self.username = username
         authenticated = False
         agent = self.agent_init()
         agent.connect()
