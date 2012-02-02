@@ -364,6 +364,9 @@ class Channel:
     class ChannelType(ctypes.Structure):
         pass
     
+    class Stat(ctypes.Structure):
+        pass
+    
     def __init__(self, parent, channel):
         self.parent = parent
         self.session = parent.session
