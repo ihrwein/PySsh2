@@ -462,3 +462,20 @@ class Channel:
     def write_stderr(self, buf):
         size = self.write_ex(1, buf)
         return size
+    
+    #int libssh2_channel_flush_ex(LIBSSH2_CHANNEL *channel, int streamid);
+    def flush_ex(self, streamid):
+        self.libssh2.libssh2_channel_flush_ex.argtypes = [ctypes.POINTER(Channel.ChannelType), ctypes.c_int]
+        self.libssh2.libssh2_channel_flush_ex.restype = ctypes.c_int
+        rc = self.libssh2.libssh2_channel_flush_ex(self.channel, streamid)
+        return rc
+    
+    #int libssh2_channel_flush(LIBSSH2_CHANNEL *channel);
+    def flush(self):
+        rc = self.flush_ex(0)
+        return rc
+    
+    #int libssh2_channel_flush_stderr(LIBSSH2_CHANNEL *channel);
+    def flush_stderr(self):
+        rc = self.flush_ex(1)
+        return rc
