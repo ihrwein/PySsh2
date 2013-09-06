@@ -2,6 +2,7 @@ import time
 import os
 import socket
 import ctypes
+import ctypes.util
 
 # Disconnect Codes (defined by SSH protocol)
 SSH_DISCONNECT = {'HOST_NOT_ALLOWED_TO_CONNECT'         : 1,
@@ -133,7 +134,7 @@ class Session:
         return rc
     
     #int libssh2_session_banner_set(LIBSSH2_SESSION *session, const char *banner);
-    def banner_set(self, banner="SSH-2.0-libssh2_1.3.0"):
+    def banner_set(self, banner=b"SSH-2.0-libssh2_1.3.0"):
         self.libssh2.libssh2_banner_set.argtypes = [ctypes.POINTER(Session.SessionType), ctypes.c_char_p]
         self.libssh2.libssh2_banner_set.restype = ctypes.c_int
         rc = self.libssh2.libssh2_banner_set(self.session, banner)
@@ -161,7 +162,7 @@ class Session:
     
     #LIBSSH2_CHANNEL * libssh2_channel_open_ex(LIBSSH2_SESSION *session, const char *channel_type, unsigned int channel_type_len, unsigned int window_size, unsigned int packet_size, const char *message, unsigned int message_len);
     #LIBSSH2_CHANNEL * libssh2_channel_open_session(LIBSSH2_SESSION *session);
-    def channel_open(self, channel_type="session", window_size=256*1024, packet_size=32768, message=""):
+    def channel_open(self, channel_type=b"session", window_size=256*1024, packet_size=32768, message=b""):
         self.libssh2.libssh2_channel_open_ex.argtypes = [ctypes.POINTER(Session.SessionType), ctypes.c_char_p, ctypes.c_uint, ctypes.c_uint, ctypes.c_uint, ctypes.c_char_p, ctypes.c_uint]
         self.libssh2.libssh2_channel_open_ex.restype = ctypes.POINTER(Channel.ChannelType)
         channel = self.libssh2.libssh2_channel_open_ex(self.session, channel_type, len(channel_type), window_size, packet_size, message, len(message))
@@ -169,7 +170,7 @@ class Session:
     
     #LIBSSH2_CHANNEL * libssh2_channel_direct_tcpip_ex(LIBSSH2_SESSION *session, const char *host, int port, const char *shost, int sport);
     #LIBSSH2_CHANNEL * libssh2_channel_direct_tcpip(LIBSSH2_SESSION *session, const char *host, int port);
-    def direct_tcpip(self, host, port, shost="127.0.0.1", sport=22):
+    def direct_tcpip(self, host, port, shost=b"127.0.0.1", sport=22):
         self.libssh2.libssh2_channel_criect_tcpip_ex.argtypes = [ctypes.POINTER(Session.SessionType), ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_int]
         self.libssh2.libssh2_channel.direct_tcpip_ex.restype = ctypes.POINTER(Channel.ChannelType)
         channel = self.libssh2.libssh2_channel.direct_tcpip_ex(host, port, shost, sport)
@@ -405,11 +406,11 @@ class Channel:
     
     #int libssh2_channel_exec(LIBSSH2_CHANNEL *channel, const char *command);
     def execute(self, command):
-        return self.process_startup("exec", len("exec"), command, len(command))
+        return self.process_startup(b"exec", len(b"exec"), command, len(command))
     
     #int libssh2_channel_shell(LIBSSH2_CHANNEL *channel)
     def shell(self):
-        return self.process_startup("shell", len("shell"), None, 0)
+        return self.process_startup(b"shell", len(b"shell"), None, 0)
     
     #int libssh2_channel_request_pty_ex(LIBSSH2_CHANNEL *channel, const char *term, unsigned int term_len, const char *modes, unsigned int modes_len, int width, int height, int width_px, int height_px);
     def request_pty_ex(self, term, modes, width, height, width_px, height_px):
@@ -422,7 +423,7 @@ class Channel:
 
     #int libssh2_channel_request_pty(LIBSSH2_CHANNEL *channel, char *term);
     def request_pty(self, term):
-        rc = self.request_pty_ex(term, "", 80, 24, 0, 0)
+        rc = self.request_pty_ex(term, b"", 80, 24, 0, 0)
         return rc
     
     #LIBSSH2_API int libssh2_channel_setenv_ex(LIBSSH2_CHANNEL *channel, const char *varname, unsigned int varname_len, const char *value, unsigned int value_len);
@@ -640,7 +641,7 @@ class SftpFile:
         username = self._sftpHandle.parent.parent.username
         (ip, port) = self._sftpHandle.parent.parent.socket.getpeername()
         path = self._sftpHandle.path
-        self.name = "sftp://%s@%s:%i%s"%(username, ip, port, path)
+        self.name = "sftp://{}@{}:{}{}".format(username, ip, port, path)
     
     def seek(self, offset, whence=os.SEEK_SET):
         if whence == os.SEEK_SET:
