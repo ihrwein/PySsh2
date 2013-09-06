@@ -94,7 +94,8 @@ class Ssh2:
     
     #int libssh2_init(int flags);
     def __init__(self):
-        self.libssh2 = ctypes.CDLL("/opt/local/lib/libssh2.dylib")
+        libpath = ctypes.util.find_library("ssh2")
+        self.libssh2 = ctypes.CDLL(libpath)
         self.libssh2.libssh2_init.restype = ctypes.c_int
         rc = self.libssh2.libssh2_init(0)
     
@@ -508,18 +509,18 @@ class SFTP:
            'TRUNC'  : (1<<4),
            'EXCL'   : (1<<5)}
     
-    S = {'IRWXU' : 0000700,
-         'IRUSR' : 0000400,
-         'IWUSR' : 0000200,
-         'IXUSR' : 0000100,
-         'IRWXG' : 0000070,
-         'IRGRP' : 0000040,
-         'IWGRP' : 0000020,
-         'IXGRP' : 0000010,
-         'IRWXO' : 0000007,
-         'IROTH' : 0000004,
-         'IWOTH' : 0000002,
-         'IXOTH' : 0000001}
+    S = {'IRWXU' : 700,
+         'IRUSR' : 400,
+         'IWUSR' : 200,
+         'IXUSR' : 100,
+         'IRWXG' : 70,
+         'IRGRP' : 40,
+         'IWGRP' : 20,
+         'IXGRP' : 10,
+         'IRWXO' : 7,
+         'IROTH' : 4,
+         'IWOTH' : 2,
+         'IXOTH' : 1}
     
     def __init__(self, parent, sftp):
         self.parent = parent
