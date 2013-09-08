@@ -5,6 +5,8 @@ import ctypes
 import ctypes.util
 import pdb
 
+from pyssh2.errors import ReadError, WriteError, AuthError, ConnectionError
+
 # Disconnect Codes (defined by SSH protocol)
 SSH_DISCONNECT = {'HOST_NOT_ALLOWED_TO_CONNECT'         : 1,
                   'SSH_DISCONNECT_PROTOCOL_ERROR'       : 2,
@@ -698,25 +700,43 @@ class SSH2:
         self.__ssh = Ssh2()
         self.__session = self.__ssh.session_init()
         self.__socket = socket.create_connection((hostname, port))
+        assert self.__socket != None, ConnectionError("Unable to connect to {}:{}".format(hostname, port))
         self.__socket.setblocking(False)
         self.__session.handshake(self.__socket)
         rc = self.__session.userauth_password(to_bytes(username),
                                               to_bytes(password))
+        assert rc == 0, AuthError("Unable to authenticate. Please, check your username and password")
         self.__channel = self.__session.channel_open()
         self.__buffer_size = 200
         self.__buffer = ctypes.create_string_buffer(self.__buffer_size)
-        self.__shell_mode = False
 
-    def shell(self):
-        rc = self.__channel.request_pty(to_bytes("vt100"))
+    def shell(self, terminal_emulator_type="vt100"):
+        return Shell(self.__channel, terminal_emulator_type)
+        
+    def close(self):
+        self.__socket.close()
+       
+class Shell:
+
+    def __init__(self,
+                channel,
+                terminal_emulator_type="vt100"):
+        self.__channel = channel
+        self.__terminal_emulator = terminal_emulator_type
+        self.__buffer_size = 200
+        self.__buffer = ctypes.create_string_buffer(self.__buffer_size)
+        rc = self.__channel.request_pty(to_bytes(self.__terminal_emulator))
         rc = self.__channel.shell()
-        self.__shell_mode = True
 
-    def read(self):
+    def read(self,
+            delay=0.6):
+        time.sleep(delay)
         result = ""
         #pdb.set_trace()
         while True: 
             size = self.__channel.read(self.__buffer)
+            if size < 0:
+                raise ReadError("Unable to read from the channel")
             if not size == self.__buffer_size:
                 break
             result += to_string(self.__buffer.value)
@@ -728,9 +748,14 @@ class SSH2:
              append_new_line=True):
         if append_new_line == True:
             buffer = "{}\n".format(buffer)
-        size = self.__channel.write(buffer)
-        return size
-        
-    def close(self):
-        self.__socket.close()
-        
+        sent_bytes = 0
+        while True:
+            size = self.__channel.write(buffer[sent_bytes:])
+            if size < 0:
+                raise WriteError("Unable to write to the channel")
+            sent_bytes = sent_bytes + size
+            if sent_bytes == len(buffer):
+                break
+        return sent_bytes
+
+
