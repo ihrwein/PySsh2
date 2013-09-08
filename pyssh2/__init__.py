@@ -3,6 +3,7 @@ import os
 import socket
 import ctypes
 import ctypes.util
+import pdb
 
 # Disconnect Codes (defined by SSH protocol)
 SSH_DISCONNECT = {'HOST_NOT_ALLOWED_TO_CONNECT'         : 1,
@@ -127,10 +128,10 @@ class Session:
         rc = self.libssh2.libssh2_session_free(self.session)
     
     #int libssh2_session_disconnect_ex(LIBSSH2_SESSION *session, int reason, const char *description, const char *lang);
-    def disconnect(self, description, reason=SSH_DISCONNECT['BY_APPLICATION'], lang=""):
-        self.libssh2.libssh2_disconnect_ex.argtypes = [ctypes.POINTER(Session.SessionType), ctypes.c_int, ctypes.c_char_p, ctypes.c_char_p]
-        self.libssh2.libssh2_disconnect_ex.restype = ctypes.c_int
-        rc = self.libssh2.session_disconnect_ex(self.session, reason, description, lang)
+    def disconnect(self, description, reason=SSH_DISCONNECT['BY_APPLICATION'], lang=b""):
+        self.libssh2.libssh2_session_disconnect_ex.argtypes = [ctypes.POINTER(Session.SessionType), ctypes.c_int, ctypes.c_char_p, ctypes.c_char_p]
+        self.libssh2.libssh2_session_disconnect_ex.restype = ctypes.c_int
+        rc = self.libssh2.libssh2_session_disconnect_ex(self.session, reason, description, lang)
         return rc
     
     #int libssh2_session_banner_set(LIBSSH2_SESSION *session, const char *banner);
@@ -466,6 +467,8 @@ class Channel:
     
     #ssize_t libssh2_channel_write(LIBSSH2_CHANNEL *channel, const char *buf, size_t buflen);
     def write(self, buf):
+        if isinstance(buf, (str)):
+            buf = bytes(buf, "utf-8")
         size = self.write_ex(0, buf)
         return size
     
@@ -674,3 +677,60 @@ class SftpFile:
                 buffer = " "*min(1024, size-len(result))
                 count = self._sftpHandle.read(buffer)
         return result
+
+def to_bytes(string, encoding="utf-8"):
+    return bytes(string, encoding)
+
+def to_string(byte):
+    return byte.decode()
+
+def connect(username, password, hostname="localhost", port=22):
+    ssh = SSH2(username, password, hostname, port)
+    return ssh
+
+class SSH2:
+    
+    def __init__(self,
+                username,
+                password,
+                hostname="localhost",
+                port=22):
+        self.__ssh = Ssh2()
+        self.__session = self.__ssh.session_init()
+        self.__socket = socket.create_connection((hostname, port))
+        self.__socket.setblocking(False)
+        self.__session.handshake(self.__socket)
+        rc = self.__session.userauth_password(to_bytes(username),
+                                              to_bytes(password))
+        self.__channel = self.__session.channel_open()
+        self.__buffer_size = 200
+        self.__buffer = ctypes.create_string_buffer(self.__buffer_size)
+        self.__shell_mode = False
+
+    def shell(self):
+        rc = self.__channel.request_pty(to_bytes("vt100"))
+        rc = self.__channel.shell()
+        self.__shell_mode = True
+
+    def read(self):
+        result = ""
+        #pdb.set_trace()
+        while True: 
+            size = self.__channel.read(self.__buffer)
+            if not size == self.__buffer_size:
+                break
+            result += to_string(self.__buffer.value)
+        result += to_string(self.__buffer.value[:size])
+        return result
+
+    def write(self,
+             buffer,
+             append_new_line=True):
+        if append_new_line == True:
+            buffer = "{}\n".format(buffer)
+        size = self.__channel.write(buffer)
+        return size
+        
+    def close(self):
+        self.__socket.close()
+        
