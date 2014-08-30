@@ -9,6 +9,14 @@ It doesn't support Python2.
 
 ## Installation
 
+First install `libssh2`. The name of the library may depend on your OS, you can also try the `libssh2` name. PySSH2 will need th `libssh2.so` file.
+
+```
+# apt-get install libssh2-1
+```
+
+Then you can install PySSH2:
+
 ```
 pip3 install git+https://github.com/ihrwein/PySsh2
 ```
